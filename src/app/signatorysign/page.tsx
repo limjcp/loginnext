@@ -139,12 +139,12 @@ export default function Home() {
                       >
                         Sign
                       </button>
-                      <button
+                      {/* <button
                         onClick={() => handleDelete(user.id)}
                         className="text-red-600 hover:text-red-900"
                       >
                         Delete
-                      </button>
+                      </button> */}
                     </td>
                   </tr>
                 ))}

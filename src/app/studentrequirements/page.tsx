@@ -40,7 +40,7 @@ export default function Home() {
       </aside>
       <div className="flex-1 p-10">
         <h1 className="text-4xl text-green-900 font-bold">GoodHoly! {session?.data?.user?.email }</h1>
-        <p>Clearance Status</p>
+        <p>Requirements</p>
         
       </div>
     </div>
