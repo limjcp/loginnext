@@ -1,72 +1,93 @@
-'use client';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { auth, db } from '../firebase'; // make sure you import db for Firestore
-import { signOut, useSession } from 'next-auth/react';
-import { redirect } from 'next/navigation';
-import { doc, setDoc, collection, getDocs, updateDoc, deleteDoc } from 'firebase/firestore'; // import Firestore functions
-import { ToastContainer, toast } from 'react-toastify'; // Import Toastify components
-import 'react-toastify/dist/ReactToastify.css'; // Import Toastify CSS
+"use client";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { auth, db } from "../firebase"; // make sure you import db for Firestore
+import { signOut, useSession } from "next-auth/react";
+import { redirect } from "next/navigation";
+import {
+  doc,
+  setDoc,
+  collection,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+} from "firebase/firestore"; // import Firestore functions
+import { ToastContainer, toast } from "react-toastify"; // Import Toastify components
+import "react-toastify/dist/ReactToastify.css"; // Import Toastify CSS
 
 export default function Signup() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordAgain, setPasswordAgain] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [department, setDepartment] = useState(''); // State for department selection
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordAgain, setPasswordAgain] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [program, setProgram] = useState("");
+  const [year, setYear] = useState("");
+  const [department, setDepartment] = useState(""); // State for department selection
   const [students, setStudents] = useState([]); // State for storing students list
   const [isEditing, setIsEditing] = useState(false); // State to check if editing
-  const [editStudentId, setEditStudentId] = useState(''); // State to store the ID of the student being edited
+  const [editStudentId, setEditStudentId] = useState(""); // State to store the ID of the student being edited
 
   const signup = async () => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
 
       // Save student info to Firestore
-      await setDoc(doc(db, 'students', user.uid), {
+      await setDoc(doc(db, "students", user.uid), {
         firstName,
+        middleName,
         lastName,
         email,
-        department, // Include department in the Firestore document
-        clearanceStatus: false // Set clearance status to false
+        department,
+        program,
+        year,
       });
 
       // Fetch the updated students list after signing up
       fetchStudents();
 
       // Reset the form fields
-      setEmail('');
-      setPassword('');
-      setPasswordAgain('');
-      setFirstName('');
-      setLastName('');
-      setDepartment('');
+      setEmail("");
+      setPassword("");
+      setPasswordAgain("");
+      setFirstName("");
+      setMiddleName("");
+      setLastName("");
+      setDepartment("");
+      setProgram("");
+      setYear("");
 
       // Show success toast
-      toast.success('Account registered successfully!');
-
+      toast.success("Account registered successfully!");
     } catch (error) {
-      if (error.code === 'auth/email-already-in-use') {
+      if (error.code === "auth/email-already-in-use") {
         // Show error toast if the account already exists
-        toast.error('Account already exists with this email!');
+        toast.error("Account already exists with this email!");
       } else {
-        console.error('Error signing up: ', error);
-        toast.error('Error signing up. Please try again.');
+        console.error("Error signing up: ", error);
+        toast.error("Error signing up. Please try again.");
       }
     }
   };
 
   const fetchStudents = async () => {
     try {
-      const querySnapshot = await getDocs(collection(db, 'students'));
-      const studentsList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const querySnapshot = await getDocs(collection(db, "students"));
+      const studentsList = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
       setStudents(studentsList);
     } catch (error) {
-      console.error('Error fetching students: ', error);
-      toast.error('Error fetching students. Please try again.');
+      console.error("Error fetching students: ", error);
+      toast.error("Error fetching students. Please try again.");
     }
   };
 
@@ -82,19 +103,22 @@ export default function Signup() {
     setFirstName(student.firstName);
     setLastName(student.lastName);
     setDepartment(student.department);
-    setPassword('');
-    setPasswordAgain('');
+    setPassword("");
+    setPasswordAgain("");
   };
 
   const handleUpdate = async () => {
     try {
-      const studentDoc = doc(db, 'students', editStudentId);
+      const studentDoc = doc(db, "students", editStudentId);
 
       await updateDoc(studentDoc, {
         firstName,
+        middleName,
         lastName,
         email,
-        department
+        department,
+        program,
+        year,
       });
 
       // Fetch the updated students list after editing
@@ -102,41 +126,42 @@ export default function Signup() {
 
       // Reset the form fields
       setIsEditing(false);
-      setEditStudentId('');
-      setEmail('');
-      setFirstName('');
-      setLastName('');
-      setDepartment('');
+      setEditStudentId("");
+      setEmail("");
+      setFirstName("");
+      setMiddleName("");
+      setLastName("");
+      setDepartment("");
+      setProgram("");
+      setYear("");
 
       // Show success toast
-      toast.success('Account updated successfully!');
-
+      toast.success("Account updated successfully!");
     } catch (error) {
-      console.error('Error updating student: ', error);
-      toast.error('Error updating student. Please try again.');
+      console.error("Error updating student: ", error);
+      toast.error("Error updating student. Please try again.");
     }
   };
 
   const handleDelete = async (studentId) => {
     try {
-      await deleteDoc(doc(db, 'students', studentId));
+      await deleteDoc(doc(db, "students", studentId));
 
       // Fetch the updated students list after deleting
       fetchStudents();
 
       // Show success toast
-      toast.success('Account deleted successfully!');
-
+      toast.success("Account deleted successfully!");
     } catch (error) {
-      console.error('Error deleting student: ', error);
-      toast.error('Error deleting student. Please try again.');
+      console.error("Error deleting student: ", error);
+      toast.error("Error deleting student. Please try again.");
     }
   };
 
   const session = useSession({
     required: true,
     onUnauthenticated() {
-      redirect('/signin');
+      redirect("/signin");
     },
   });
 
@@ -144,27 +169,36 @@ export default function Signup() {
     <>
       <ToastContainer /> {/* Add ToastContainer to render toasts */}
       <div className="p-8">
-        <div className='text-black'>{session?.data?.user?.email}</div>
-        <button className='text-black' onClick={() => signOut()}>Logout</button>
-        <a href='admin' className='p-10'>Register Signatory</a>
+        <div className="text-black">{session?.data?.user?.email}</div>
+        <button className="text-black" onClick={() => signOut()}>
+          Logout
+        </button>
+        <a href="admin" className="p-10">
+          Register Signatory
+        </a>
       </div>
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-          <h3 className='mt-10 text-center text-2xl font-bold leading-9 tracking-tight'>Admin</h3>
+          <h3 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight">
+            Admin
+          </h3>
           <img
             className="mx-auto h-100 w-100"
             src="https://htcgsc.edu.ph/wp-content/uploads/2022/02/htc-new-seal.png"
             alt="Your Company"
           />
           <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-black">
-            {isEditing ? 'Edit Student' : 'Register Student'}
+            {isEditing ? "Edit Student" : "Register Student"}
           </h2>
         </div>
 
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
           <div className="space-y-6">
             <div>
-              <label htmlFor="firstName" className="block text-sm font-medium leading-6 text-black">
+              <label
+                htmlFor="firstName"
+                className="block text-sm font-medium leading-6 text-black"
+              >
                 First Name
               </label>
               <div className="mt-2">
@@ -181,7 +215,30 @@ export default function Signup() {
             </div>
 
             <div>
-              <label htmlFor="lastName" className="block text-sm font-medium leading-6 text-black">
+              <label
+                htmlFor="middleName"
+                className="block text-sm font-medium leading-6 text-black"
+              >
+                Middle Name
+              </label>
+              <div className="mt-2">
+                <input
+                  id="middleName"
+                  name="middleName"
+                  type="text"
+                  value={middleName}
+                  onChange={(e) => setMiddleName(e.target.value)}
+                  required
+                  className="block w-full rounded-md border-0 bg-black/5 py-1.5 text-black shadow-sm ring-1 ring-inset ring-black/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="lastName"
+                className="block text-sm font-medium leading-6 text-black"
+              >
                 Last Name
               </label>
               <div className="mt-2">
@@ -198,7 +255,10 @@ export default function Signup() {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium leading-6 text-black">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium leading-6 text-black"
+              >
                 Email address
               </label>
               <div className="mt-2">
@@ -217,7 +277,10 @@ export default function Signup() {
 
             <div>
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm font-medium leading-6 text-black">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium leading-6 text-black"
+                >
                   Password
                 </label>
               </div>
@@ -236,7 +299,10 @@ export default function Signup() {
             </div>
             <div>
               <div className="flex items-center justify-between">
-                <label htmlFor="passwordAgain" className="block text-sm font-medium leading-6 text-black">
+                <label
+                  htmlFor="passwordAgain"
+                  className="block text-sm font-medium leading-6 text-black"
+                >
                   Password Again
                 </label>
               </div>
@@ -255,7 +321,10 @@ export default function Signup() {
             </div>
 
             <div>
-              <label htmlFor="department" className="block text-sm font-medium leading-6 text-black">
+              <label
+                htmlFor="department"
+                className="block text-sm font-medium leading-6 text-black"
+              >
                 Department
               </label>
               <div className="mt-2">
@@ -267,12 +336,54 @@ export default function Signup() {
                   required
                   className="block w-full rounded-md border-0 bg-black/5 py-1.5 text-black shadow-sm ring-1 ring-inset ring-black/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6"
                 >
-                  <option value="" disabled>Select department</option>
+                  <option value="" disabled>
+                    Select department
+                  </option>
                   <option value="CETE">CETE</option>
                   <option value="CCJE">CCJE</option>
                   <option value="CTE">CTE</option>
                   {/* Add more department options as needed */}
                 </select>
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="program"
+                className="block text-sm font-medium leading-6 text-black"
+              >
+                Program
+              </label>
+              <div className="mt-2">
+                <input
+                  id="program"
+                  name="program"
+                  type="text"
+                  value={program}
+                  onChange={(e) => setProgram(e.target.value)}
+                  required
+                  className="block w-full rounded-md border-0 bg-black/5 py-1.5 text-black shadow-sm ring-1 ring-inset ring-black/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="year"
+                className="block text-sm font-medium leading-6 text-black"
+              >
+                Year
+              </label>
+              <div className="mt-2">
+                <input
+                  id="year"
+                  name="year"
+                  type="text"
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
+                  required
+                  className="block w-full rounded-md border-0 bg-black/5 py-1.5 text-black shadow-sm ring-1 ring-inset ring-black/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6"
+                />
               </div>
             </div>
 
@@ -287,7 +398,15 @@ export default function Signup() {
                 </button>
               ) : (
                 <button
-                  disabled={(!email || !password || !passwordAgain || !firstName || !lastName || !department) || (password !== passwordAgain)}
+                  disabled={
+                    !email ||
+                    !password ||
+                    !passwordAgain ||
+                    !firstName ||
+                    !lastName ||
+                    !department ||
+                    password !== passwordAgain
+                  }
                   onClick={() => signup()}
                   className="disabled:opacity-40 flex w-full justify-center rounded-md bg-green-500 px-3 py-1.5 text-sm font-semibold leading-6 text-black shadow-sm hover:bg-green-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                 >
@@ -298,26 +417,61 @@ export default function Signup() {
           </div>
         </div>
       </div>
-
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-2xl">
+      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-2xl flex justify-center">
         <div className="border-b border-gray-200 sm:rounded-lg">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">First Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  First Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Middle Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Last Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Department
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Program
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Year
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {students.map((student, index) => (
                 <tr key={index}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{student.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{student.firstName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{student.lastName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{student.department}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {student.email}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {student.firstName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {student.middleName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {student.lastName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {student.department}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {student.program}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {student.year}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
                       onClick={() => handleEdit(student)}
